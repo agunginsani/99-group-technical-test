@@ -1,38 +1,30 @@
-# Welcome to Remix!
+# Installation
 
-- [Remix Docs](https://remix.run/docs)
+## Prerequisites
 
-## Development
+Before you begin, ensure that you have the following installed on your machine:
 
-From your terminal:
+- Node.js: [Download and Install Node.js](https://nodejs.org/)
+- pnpm: [Install pnpm](https://pnpm.io/installation)
 
-```sh
-npm run dev
-```
+## Installation steps
 
-This starts your app in development mode, rebuilding assets on file changes.
+1. Install Dependencies with pnpm
 
-## Deployment
+   Run the following command to install project dependencies using pnpm:
 
-First, build your app for production:
+   ```
+   pnpm install
+   ```
+2. Start the Development Server
 
-```sh
-npm run build
-```
+   To start the Remix development server, run the following command:
 
-Then run the app in production mode:
+   ```
+   pnpm run dev
+   ```
 
-```sh
-npm start
-```
+   This will launch your Remix application in development mode. You can access it at http://localhost:3000.
 
-Now you'll need to pick a host to deploy it to.
 
-### DIY
 
-If you're familiar with deploying node applications, the built-in Remix app server is production-ready.
-
-Make sure to deploy the output of `remix build`
-
-- `build/`
-- `public/build/`
