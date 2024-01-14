@@ -1,6 +1,4 @@
 import {
-  ArrowUpIcon,
-  ArrowDownIcon,
   ArrowsPointingOutIcon,
   ArrowsPointingInIcon,
 } from "@heroicons/react/24/solid";
@@ -14,10 +12,11 @@ import { Outlet, useNavigation, Link, useLoaderData } from "@remix-run/react";
 
 import { userPrefs } from "~/cookies.server";
 import { SortTypeError, getPosts } from "~/feature/subreddit/repository";
+import { VoteButton } from "~/feature/subreddit/components";
 
 export async function loader({ params, request }) {
   try {
-    const posts = await getPosts(params.sort);
+    const posts = await getPosts(params.sort, { page: 1 });
     const cookieHeader = request.headers.get("Cookie");
     const cookie = (await userPrefs.parse(cookieHeader)) || {};
 
@@ -39,11 +38,50 @@ export async function loader({ params, request }) {
   }
 }
 
-export default function SubredditSort() {
+// function useLoadMorePosts({ initialValue, sort, page }) {
+//   const [infinitePosts, setInfinitePosts] = useState(initialValue);
+
+//   useEffect(() => {
+//     if (page !== 1)
+//       getPosts(sort, { page }).then((posts) => {
+//         setInfinitePosts((prevs) => [...prevs, ...posts]);
+//       });
+//   }, [page, sort]);
+
+//   return { infinitePosts, setInfinitePosts };
+// }
+
+export default function Page() {
   const { posts, viewMode } = useLoaderData();
+
+  // const params = useParams();
+
   const navigation = useNavigation();
 
-  if (navigation.state === "loading") {
+  // const [page, setPage] = useState(1);
+
+  // const { infinitePosts } = useLoadMorePosts({
+  //   sort: params.sort,
+  //   initialValue: posts,
+  //   page,
+  // });
+
+  // const observer = useRef();
+
+  // const lastElementRef = useCallback((node) => {
+  //   observer.current?.disconnect();
+
+  //   observer.current = new IntersectionObserver((entries) => {
+  //     if (entries[0].isIntersecting) setPage((prev) => prev + 1);
+  //   });
+
+  //   if (node) observer.current.observe(node);
+  // }, []);
+
+  if (
+    navigation.state === "loading" &&
+    !navigation.location?.pathname.includes("/comments/")
+  ) {
     return <p className="bg-white p-2 rounded">Loading...</p>;
   }
 
@@ -55,9 +93,9 @@ export default function SubredditSort() {
           "gap-2": viewMode === 0,
         })}
       >
-        {posts.map((post) => (
+        {posts.map((post, index) => (
           <li
-            key={post.data.id}
+            key={`${post.data.id} ${index}`}
             className={clsx("bg-white overflow-hidden", {
               "rounded-md": viewMode === 0,
               "border-b-2 border-solid": viewMode !== 0,
@@ -146,15 +184,7 @@ function ThreadCardDefault() {
   return (
     <div className="flex">
       <div className="bg-slate-50 w-20 flex flex-shrink-0 justify-center">
-        <div className="flex flex-col gap-2 py-2 px-1 align-middle">
-          <button>
-            <ArrowUpIcon className="h-5 w-5" />
-          </button>
-          <span className="text-center">{upvotes}</span>
-          <button>
-            <ArrowDownIcon className="h-5 w-5" />
-          </button>
-        </div>
+        <VoteButton votes={upvotes} />
       </div>
       <div className="p-2">
         <div className="text-xs">
@@ -183,15 +213,7 @@ function ThreadCardClassic() {
   return (
     <div className="flex">
       <div className="bg-slate-50 w-20 flex flex-shrink-0 justify-center">
-        <div className="flex flex-col gap-2 py-2 px-1 align-middle">
-          <button>
-            <ArrowUpIcon className="h-5 w-5" />
-          </button>
-          <span className="text-center">{upvotes}</span>
-          <button>
-            <ArrowDownIcon className="h-5 w-5" />
-          </button>
-        </div>
+        <VoteButton votes={upvotes} />
       </div>
       <div className="p-2">
         <h3 className="text-lg font-bold">
@@ -231,15 +253,7 @@ function ThreadCardCompact() {
     <div>
       <div className="flex">
         <div className="bg-slate-50 w-24 flex flex-shrink-0 justify-center">
-          <div className="flex h-fit gap-2 py-2 px-1 align-middle">
-            <button>
-              <ArrowUpIcon className="h-5 w-5" />
-            </button>
-            <span className="text-center">{upvotes}</span>
-            <button>
-              <ArrowDownIcon className="h-5 w-5" />
-            </button>
-          </div>
+          <VoteButton votes={upvotes} horizontal />
         </div>
         <div className="flex justify-between flex-1 px-2">
           <div className="flex">

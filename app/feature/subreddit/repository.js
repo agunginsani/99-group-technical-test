@@ -9,7 +9,9 @@ function defer(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function getPosts(sort) {
+// "Page" is just dummy param for simulate infinite scroll.
+// eslint-disable-next-line no-unused-vars
+export async function getPosts(sort, { page }) {
   await defer(1000);
 
   let posts;
