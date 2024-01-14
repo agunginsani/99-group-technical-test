@@ -7,25 +7,23 @@ import {
 import { ChatBubbleLeftIcon } from "@heroicons/react/24/outline";
 import PropTypes from "prop-types";
 import { json } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
-import { useState } from "react";
 import { formatDistance } from "date-fns";
 import { clsx } from "clsx";
+import { createContext, useContext, useState } from "react";
+import { Outlet, useNavigation, Link, useLoaderData } from "@remix-run/react";
 
 import { userPrefs } from "~/cookies.server";
 import { SortTypeError, getPosts } from "~/feature/subreddit/repository";
-import { createContext } from "react";
-import { useContext } from "react";
 
 export async function loader({ params, request }) {
   try {
-    const posts = getPosts(params.sort);
+    const posts = await getPosts(params.sort);
     const cookieHeader = request.headers.get("Cookie");
     const cookie = (await userPrefs.parse(cookieHeader)) || {};
 
     return json({
       viewMode: parseInt(cookie.viewMode?.value ?? "0"),
-      posts: posts,
+      posts,
     });
   } catch (error) {
     if (error instanceof SortTypeError)
@@ -43,32 +41,41 @@ export async function loader({ params, request }) {
 
 export default function SubredditSort() {
   const { posts, viewMode } = useLoaderData();
+  const navigation = useNavigation();
+
+  if (navigation.state === "loading") {
+    return <p className="bg-white p-2 rounded">Loading...</p>;
+  }
 
   return (
-    <ul
-      className={clsx("flex flex-col", {
-        "gap-2": viewMode === 0,
-      })}
-    >
-      {posts.map((post) => (
-        <li
-          key={post.data.id}
-          className={clsx("bg-white overflow-hidden", {
-            "rounded-md": viewMode === 0,
-            "border-b-2 border-solid": viewMode !== 0,
-          })}
-        >
-          <ThreadCard
-            title={post.data.title}
-            body={post.data.selftext}
-            created={post.data.created}
-            author={post.data.author}
-            comments={post.data.num_comments}
-            upvotes={post.data.ups}
-          />
-        </li>
-      ))}
-    </ul>
+    <div>
+      <Outlet />
+      <ul
+        className={clsx("flex flex-col", {
+          "gap-2": viewMode === 0,
+        })}
+      >
+        {posts.map((post) => (
+          <li
+            key={post.data.id}
+            className={clsx("bg-white overflow-hidden", {
+              "rounded-md": viewMode === 0,
+              "border-b-2 border-solid": viewMode !== 0,
+            })}
+          >
+            <ThreadCard
+              id={post.data.id}
+              title={post.data.title}
+              body={post.data.selftext}
+              created={post.data.created}
+              author={post.data.author}
+              comments={post.data.num_comments}
+              upvotes={post.data.ups}
+            />
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -85,7 +92,7 @@ function useThreadCardContext() {
   return context;
 }
 
-function ThreadCard({ title, author, created, body, comments, upvotes }) {
+function ThreadCard({ id, title, author, created, body, comments, upvotes }) {
   const { viewMode } = useLoaderData();
   const formattedCreated = formatDistance(new Date(created * 1000), new Date());
 
@@ -107,6 +114,7 @@ function ThreadCard({ title, author, created, body, comments, upvotes }) {
   return (
     <ThreadCardContext.Provider
       value={{
+        id,
         title,
         author,
         created: formattedCreated,
@@ -122,6 +130,7 @@ function ThreadCard({ title, author, created, body, comments, upvotes }) {
 
 ThreadCard.propTypes = {
   mode: PropTypes.oneOf([0, 1, 2]),
+  id: PropTypes.string.isRequired,
   title: PropTypes.string.isRequired,
   author: PropTypes.string.isRequired,
   body: PropTypes.string.isRequired,
@@ -131,7 +140,7 @@ ThreadCard.propTypes = {
 };
 
 function ThreadCardDefault() {
-  const { title, author, created, body, comments, upvotes } =
+  const { id, title, author, created, body, comments, upvotes } =
     useThreadCardContext();
 
   return (
@@ -151,7 +160,11 @@ function ThreadCardDefault() {
         <div className="text-xs">
           Posted by u/{author} {created} ago
         </div>
-        <h3 className="text-lg font-bold mt-2">{title}</h3>
+        <h3 className="text-lg font-bold mt-2">
+          <Link preventScrollReset to={`comments/${id}`}>
+            {title}
+          </Link>
+        </h3>
         <div className="mt-3">{body}</div>
         <div className="flex items-center gap-1 mt-4 text-xs text-slate-500">
           <ChatBubbleLeftIcon className="w-5 h-5" /> {comments} Comments
@@ -162,7 +175,7 @@ function ThreadCardDefault() {
 }
 
 function ThreadCardClassic() {
-  const { title, author, created, body, comments, upvotes } =
+  const { id, title, author, created, body, comments, upvotes } =
     useThreadCardContext();
 
   const [isExpanded, setIsExpanded] = useState(false);
@@ -181,7 +194,11 @@ function ThreadCardClassic() {
         </div>
       </div>
       <div className="p-2">
-        <h3 className="text-lg font-bold">{title}</h3>
+        <h3 className="text-lg font-bold">
+          <Link preventScrollReset to={`comments/${id}`}>
+            {title}
+          </Link>
+        </h3>
         <div className="text-xs">
           Posted by u/{author} {created} ago
         </div>
@@ -205,7 +222,7 @@ function ThreadCardClassic() {
 }
 
 function ThreadCardCompact() {
-  const { title, author, created, body, comments, upvotes } =
+  const { id, title, author, created, body, comments, upvotes } =
     useThreadCardContext();
 
   const [isExpanded, setIsExpanded] = useState(false);
@@ -234,7 +251,11 @@ function ThreadCardCompact() {
               )}
             </button>
             <div className="p-2">
-              <h3 className="text-lg font-bold">{title}</h3>
+              <h3 className="text-lg font-bold">
+                <Link preventScrollReset to={`comments/${id}`}>
+                  {title}
+                </Link>
+              </h3>
               <div className="text-xs">
                 Posted by u/{author} {created} ago
               </div>
