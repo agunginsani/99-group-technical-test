@@ -24,7 +24,7 @@ Before you begin, ensure that you have the following installed on your machine:
    pnpm run dev
    ```
 
-   This will launch your Remix application in development mode. You can access it at http://localhost:3000.
+   This will launch your Remix application in development mode. You can access it at http://localhost:3000. You can see my work on http://localhost:3000/r/[ANY_RANDOM_STRING]. For example http://localhost:3000/r/gifs.
 
 # Notes
 
